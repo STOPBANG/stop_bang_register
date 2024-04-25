@@ -1,185 +1,164 @@
-const authModel = require("../models/authModel");
 const jwt = require("jsonwebtoken");
 const mailer = require("../modules/mailer");
-const db = require("../config/db");
-const _makeCertificationKey = () => {
-    var key = ""; // 인증키
-
-    // 난수 생성 후 인증키로 활용
-    for (var i = 0; i < 5; i++) {
-        key = key + Math.floor(Math.random() * (10 - 0));
-    }
-
-    return key;
-};
-
-function checkUsernameExists(username, responseToClient) {
-    authModel.getUserByUsername(username, (user) => {
-        if (user[0].length !== 0) return responseToClient(true);
-
-        authModel.getAgentByUsername(username, (user) => {
-            responseToClient(user[0].length !== 0);
-        });
-    });
-}
-
-function checkPasswordCorrect(password) {
-    const uppercaseRegex = /[A-Z]/;
-    const lowercaseRegex = /[a-z]/;
-    const numberRegex = /[0-9]/;
-    const specialCharRegex = /[!@#$%^&*]/;
-
-    return (
-        uppercaseRegex.test(password) &&
-        lowercaseRegex.test(password) &&
-        numberRegex.test(password) &&
-        specialCharRegex.test(password)
-    );
-}
+const {httpRequest} = require('../utils/httpRequest');
 
 module.exports = {
 
-    certification: async (req, res) => {
-        try {
-            const { email } = req.body;
-            if (!email || typeof email !== "string") {
-                return res.status(400).send("Invalid Param");
-            }
+  certification: async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== "string") {
+        return res.status(400).send("Invalid Param");
+      }
 
-            const code = _makeCertificationKey();
-            const [rows, fields] = await db.query(
-                `SELECT * FROM certification WHERE email='${email}'`
-            );
-            if (rows.length > 0) {
-                await db.query(
-                    `UPDATE certification SET code='${code}' WHERE email='${email}'`
-                );
-            } else {
-                await db.query("INSERT INTO certification (email, code) VALUE(?, ?);", [
-                    email,
-                    code,
-                ]);
-            }
-            await mailer.sendEmail(email, code);
-            res.send("Success!");
-        } catch (error) {
-            console.log(error);
-            res.status(500).send("Server Error");
+      /* msa */
+      const postOptions = {
+        host: 'stop_bang_auth_DB',
+        port: process.env.PORT,
+        path: `/db/cert/create`,
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         }
-    },
+      };
 
-    certificationCheck : async (req, res) => {
-        try {
-            const { email, code } = req.body;
+      const requestBody = req.body;
+      httpRequest(postOptions, requestBody)
+        .then(res => {
+          mailer.sendEmail(res.body.email, res.body.code);
+        });
 
-            if (
-                !email ||
-                typeof email !== "string" ||
-                !code ||
-                typeof code !== "string"
-            ) {
-                return res.status(400).send("Invalid Param");
-            }
+      res.send("Success!");
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Server Error");
+    }
+  },
 
-            const [rows, fields] = await db.query(
-                `SELECT * FROM certification WHERE email='${email}' AND code='${code}'`
-            );
-            if (!rows[0]) {
-                return res.status(404).send("Data Not Found.");
-            }
+  certificationCheck: async (req, res) => {
+    try {
+      const { email, code } = req.body;
 
-            res.send("Success!");
-        } catch (error) {
-            console.log(error);
-            res.status(500).send("Server Error");
+      if (
+        !email ||
+        typeof email !== "string" ||
+        !code ||
+        typeof code !== "string"
+      ) {
+        return res.status(400).send("Invalid Param");
+      }
+
+      /* msa */
+      const postOptions = {
+        host: 'stop_bang_auth_DB',
+        port: process.env.PORT,
+        path: `/db/cert/compare`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         }
-    },
+      };
 
-    registerView: (req, res) => {
-        res.render("users/register");
-    },
+      const requestBody = req.body;
+      httpRequest(postOptions, requestBody)
+        .then(res => {
+          if (!res) {
+            return res.status(404).send("Data Not Found.");
+          }
+        })
 
-    registerResident: async (req, res) => {
-        // Check if required fields are missing
-        const body = req.body;
+      res.send("Success!");
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Server Error");
+    }
+  },
 
-        if (!checkPasswordCorrect(body.password))
-            return res.render('notFound.ejs', {message: "비밀번호 제약을 확인해주세요"});
+  registerResident: async (req, res) => {
+    /* msa */
+    const postOptions = {
+      host: 'stop_bang_auth_DB',
+      port: process.env.PORT,
+      path: `/db/resident/create`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
 
-        checkUsernameExists(body.username, async (usernameExists) => {
-            if (usernameExists) {
-                return res.render('notFound.ejs', {message: "이미 사용중인 아이디입니다."});
-            }
+    const requestBody = req.body;
+    httpRequest(postOptions, requestBody)
+      .then(response => {
+        const userId = response.body.id;
+        // Error during registration
+        if (!userId) {
+          return res.render('notFound.ejs', {message: "회원가입 실패"});
+        } else {
+          const token = jwt.sign({ userId }, process.env.JWT_SECRET_KEY);
+          // Store user's userId in the cookie upon successful registration
+          res.cookie("authToken", token, {
+            maxAge: 86400_000,
+            httpOnly: true,
+          });
+          res.cookie("userType", 1, {
+            maxAge: 86400_000,
+            httpOnly: true,
+          })
+          .redirect("/");
+        }
+      });
+  },
 
-            try {
-                // Save new user information to the database
-                const userId = await authModel.registerResident(req.body);
+  registerAgent: async (req, res) => {
+    /* msa */
+    const postOptions = {
+      host: 'stop_bang_auth_DB',
+      port: process.env.PORT,
+      path: `/db/agent/create`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
 
-                if (!userId) {
-                    return res.render('notFound.ejs', {message: "회원가입 실패"});
-                } else {
-                    const token = jwt.sign({ userId }, process.env.JWT_SECRET_KEY);
-                    // Store user's userId in the cookie upon successful registration
-                    res.cookie("authToken", token, {
-                        maxAge: 86400_000,
-                        httpOnly: true,
-                    });
-                    res.cookie("userType", 1, {
-                        maxAge: 86400_000,
-                        httpOnly: true,
-                    }).redirect("/");
-                }
-            } catch (error) {
-                console.error(error);
-                res.status(500).send("Server Error");
-            }
-        });
-    },
+    const requestBody = req.body;
+    httpRequest(postOptions, requestBody)
+      .then(response => {
+        const userId = response.body.id;
+        if (!userId) {
+          return res.render('notFound.ejs', { message: "회원가입 실패" });
+        } else {
+          const token = jwt.sign({ userId }, process.env.JWT_SECRET_KEY);
+          // Store agent's userId in the cookie upon successful registration
+          res.cookie("authToken", token, {
+            maxAge: 86400_000,
+            httpOnly: true,
+          });
+          res.cookie("userType", 0, {
+            maxAge: 86400_000,
+            httpOnly: true,
+          }).redirect("/");
+        }
+      });
+  },
+  
+  getPhoneNumber: async (req, res) => {
+    const ra_regno = req.params.ra_regno;
+    /* msa */
+    // 서울시 공공데이터 api
+    const apiResponse = await fetch(
+      `http://openapi.seoul.go.kr:8088/${process.env.API_KEY}/json/landBizInfo/1/1000`
+    );
+    const js = await apiResponse.json();
+    const agentPublicData = js.landBizInfo.row;
 
-    registerResidentView: (req, res) => {
-        res.render("users/resident/register");
-    },
-
-    registerAgent: async (req, res) => {
-        // Check if required fields are missing
-        const body = req.body;
-
-        if (!checkPasswordCorrect(body.password))
-            return res.render('notFound.ejs', {message: "비밀번호 제약을 확인해주세요"});
-
-        checkUsernameExists(body.username, async (usernameExists) => {
-            if (usernameExists) {
-                return res.render('notFound.ejs', {message: "이미 사용중인 아이디입니다."});
-            }
-
-            try {
-                // Save new agent information to the database
-                const userId = await authModel.registerAgent(req.body);
-
-                if (!userId) {
-                    return res.render('notFound.ejs', {message: "회원가입 실패"});
-                } else {
-                    const token = jwt.sign({ userId }, process.env.JWT_SECRET_KEY);
-                    // Store agent's userId in the cookie upon successful registration
-                    res.cookie("authToken", token, {
-                        maxAge: 86400_000,
-                        httpOnly: true,
-                    });
-                    res.cookie("userType", 0, {
-                        maxAge: 86400_000,
-                        httpOnly: true,
-                    }).redirect("/");
-                }
-            } catch (error) {
-                console.error(error);
-                res.status(500).send("Server Error");
-            }
-        });
-    },
-
-    registerAgentView: (req, res) => {
-        res.render("users/agent/register");
-    },
+    for(const row of agentPublicData) {
+      if(row.SYS_REGNO === ra_regno || row.RA_REGNO === ra_regno) {
+        return res.json({phoneNumber: row.TELNO});
+      }
+    }
+    return res.json({phoneNumber: ''});
+  }
 };
 
 
