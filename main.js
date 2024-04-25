@@ -16,13 +16,11 @@ app.use(express.urlencoded({ extended: false }));
 
 // 회원가입
 const registerController = require("./controllers/registerController");
-app.post("/register/resident", registerController.registerResident);
-app.post("/register/agent", registerController.registerAgent);
 app.post("/certification", registerController.certification);
 app.post("/certificationCheck", registerController.certificationCheck);
-app.get("/register", registerController.registerView);
-app.get("/register/agent", registerController.registerAgentView);
-app.get("/register/resident", registerController.registerResidentView);
+app.post("/register/resident", registerController.registerResident);
+app.post("/register/agent", registerController.registerAgent);
+app.get("/phoneNumber/:ra_regno", registerController.getPhoneNumber);
 
 app.listen(app.get("port"), () => {
     console.log(app.get("port"), "번 포트에게 대기중");
