@@ -104,7 +104,6 @@ module.exports = {
             maxAge: 86400_000,
             httpOnly: true,
           });
-          return res.redirect("/");
         }
       });
   },
@@ -138,7 +137,6 @@ module.exports = {
             maxAge: 86400_000,
             httpOnly: true,
           });
-          return res.redirect("/");
         }
       });
   },
