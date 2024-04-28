@@ -103,8 +103,8 @@ module.exports = {
           res.cookie("userType", 1, {
             maxAge: 86400_000,
             httpOnly: true,
-          })
-          .redirect("/");
+          });
+          return res.redirect("/");
         }
       });
   },
@@ -137,7 +137,8 @@ module.exports = {
           res.cookie("userType", 0, {
             maxAge: 86400_000,
             httpOnly: true,
-          }).redirect("/");
+          });
+          return res.redirect("/");
         }
       });
   },
