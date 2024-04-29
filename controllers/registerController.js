@@ -151,12 +151,20 @@ module.exports = {
     const js = await apiResponse.json();
     const agentPublicData = js.landBizInfo.row;
 
+    let phoneNumber = '';
+
     for(const row of agentPublicData) {
-      if(row.SYS_REGNO === ra_regno || row.RA_REGNO === ra_regno) {
-        return res.json({phoneNumber: row.TELNO});
+      if(row.RA_REGNO === ra_regno) {
+        phoneNumber = row.TELNO;
+        break;
       }
     }
-    return res.json({phoneNumber: ''});
+
+    if (phoneNumber !== '') {
+      res.json({phoneNumber: phoneNumber});
+    } else {
+      res.json({phoneNumber: ''});
+    }
   }
 };
 
