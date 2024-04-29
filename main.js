@@ -20,7 +20,7 @@ app.post("/certification", registerController.certification);
 app.post("/certificationCheck", registerController.certificationCheck);
 app.post("/register/resident", registerController.registerResident);
 app.post("/register/agent", registerController.registerAgent);
-app.get("/register/agent/phoneNumber/:ra_regno", registerController.getPhoneNumber);
+app.get("/phoneNumber/:ra_regno", registerController.getPhoneNumber);
 
 app.listen(app.get("port"), () => {
     console.log(app.get("port"), "번 포트에게 대기중");
