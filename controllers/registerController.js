@@ -137,7 +137,7 @@ module.exports = {
     /* msa */
     // 서울시 공공데이터 api
     const apiResponse = await fetch(
-      `http://openapi.seoul.go.kr:8088/${process.env.API_KEY}/json/landBizInfo/1/1/${ra_regno}`
+        `http://openapi.seoul.go.kr:8088/${process.env.API_KEY}/json/landBizInfo/1/1000`
     );
     const js = await apiResponse.json();
     const agentPublicData = js.landBizInfo.row;
