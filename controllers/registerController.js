@@ -122,23 +122,14 @@ module.exports = {
 
     const requestBody = req.body;
     httpRequest(postOptions, requestBody)
-      .then(response => {
-        const userId = response.body.id;
-        if (!userId) {
-          return res.render('notFound.ejs', { message: "회원가입 실패" });
-        } else {
-          const token = jwt.sign({ userId }, process.env.JWT_SECRET_KEY);
-          // Store agent's userId in the cookie upon successful registration
-          res.cookie("authToken", token, {
-            maxAge: 86400_000,
-            httpOnly: true,
-          });
-          res.cookie("userType", 0, {
-            maxAge: 86400_000,
-            httpOnly: true,
-          });
-        }
-      });
+        .then(userId => {
+          if (!userId) {
+            res.render('notFound.ejs', { message: "회원가입 실패" });
+          } else {
+            console.log("회원 가입 성공");
+            res.redirect('/');
+          }
+        });
   },
   
   getPhoneNumber: async (req, res) => {
