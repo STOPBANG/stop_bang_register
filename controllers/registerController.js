@@ -89,12 +89,12 @@ module.exports = {
     const requestBody = req.body;
     httpRequest(postOptions, requestBody)
       .then(response => {
-        const userId = response.body.id;
+        const userInfo = response.body;
         // Error during registration
-        if (!userId) {
-          return res.render('notFound.ejs', {message: "회원가입 실패"});
+        if (!userInfo) {
+          return res.json({message: "회원가입 실패"});
         } else {
-          const token = jwt.sign({ userId }, process.env.JWT_SECRET_KEY);
+          const token = jwt.sign(userInfo, process.env.JWT_SECRET_KEY);
           // Store user's userId in the cookie upon successful registration
           res.cookie("authToken", token, {
             maxAge: 86400_000,
@@ -104,6 +104,7 @@ module.exports = {
             maxAge: 86400_000,
             httpOnly: true,
           });
+          res.redirect('/');
         }
       });
   },
@@ -122,11 +123,22 @@ module.exports = {
 
     const requestBody = req.body;
     httpRequest(postOptions, requestBody)
-        .then(userId => {
-          if (!userId) {
-            res.render('notFound.ejs', { message: "회원가입 실패" });
+        .then(response => {
+          const userInfo = response.body;
+          if (!userInfo) {
+            res.json({ message: "회원가입 실패" });
           } else {
             console.log("회원 가입 성공");
+            const token = jwt.sign(userInfo, process.env.JWT_SECRET_KEY);
+            // Store user's userId in the cookie upon successful registration
+            res.cookie("authToken", token, {
+              maxAge: 86400_000,
+              httpOnly: true,
+            });
+            res.cookie("userType", 0, {
+              maxAge: 86400_000,
+              httpOnly: true,
+            });
             res.redirect('/');
           }
         });
