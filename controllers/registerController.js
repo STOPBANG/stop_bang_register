@@ -120,8 +120,33 @@ module.exports = {
         'Content-Type': 'application/json',
       }
     };
-
+    
     const requestBody = req.body;
+    // agent_list_ra_regno에는 공공데이터의 SYS_REGNO를 대입
+    // 서울시 공공데이터 api
+    let startIndex = 1;
+    let hasMoreData = true;
+    while(hasMoreData) {
+      const apiResponse = await fetch(
+          `http://openapi.seoul.go.kr:8088/${process.env.API_KEY}/json/landBizInfo/${startIndex}/${startIndex+999}/`
+      );
+      const js = await apiResponse.json();
+      if(js.landBizInfo && js.landBizInfo.row) {
+        const agentPublicData = js.landBizInfo.row;
+
+        for(const row of agentPublicData) {
+          if(row.RA_REGNO === requestBody.agentList_ra_regno) {
+            requestBody.agentList_ra_regno = row.SYS_REGNO;
+            hasMoreData = false;
+            break;
+          }
+        }
+        startIndex += 1000;
+      } else {
+        hasMoreData = false;
+      }
+    }
+
     httpRequest(postOptions, requestBody)
         .then(response => {
           const userInfo = response.body;
@@ -146,20 +171,30 @@ module.exports = {
   
   getPhoneNumber: async (req, res) => {
     const ra_regno = req.params.ra_regno;
+    console.log(ra_regno);
     /* msa */
     // 서울시 공공데이터 api
-    const apiResponse = await fetch(
-        `http://openapi.seoul.go.kr:8088/${process.env.API_KEY}/json/landBizInfo/1/1000`
-    );
-    const js = await apiResponse.json();
-    const agentPublicData = js.landBizInfo.row;
-
+    let startIndex = 1;
     let phoneNumber = '';
+    let hasMoreData = true;
+    while(hasMoreData) {
+      const apiResponse = await fetch(
+        `http://openapi.seoul.go.kr:8088/${process.env.API_KEY}/json/landBizInfo/${startIndex}/${startIndex+999}/`
+      );
+      const js = await apiResponse.json();
+      if(js.landBizInfo && js.landBizInfo.row) {
+        const agentPublicData = js.landBizInfo.row;
 
-    for(const row of agentPublicData) {
-      if(row.RA_REGNO === ra_regno) {
-        phoneNumber = row.TELNO;
-        break;
+        for(const row of agentPublicData) {
+          if(row.RA_REGNO === ra_regno) {
+            phoneNumber = row.TELNO;
+            hasMoreData = false;
+            break;
+          }
+        }
+        startIndex += 1000;
+      } else {
+        hasMoreData = false;
       }
     }
 
