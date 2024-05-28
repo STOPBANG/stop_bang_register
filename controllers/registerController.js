@@ -76,41 +76,79 @@ module.exports = {
 
   registerResident: async (req, res) => {
     /* msa */
-    const postOptions = {
+    const postFindRegisterOptions = {
       host: 'stop_bang_auth_DB',
       port: process.env.PORT,
-      path: `/db/resident/create`,
+      path: `/db/resident/findById`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       }
-    };
+    }
+  
+    let findRegisterRequestBody = {username: res.locals.auth};
+    httpRequest(postFindRegisterOptions, findRegisterRequestBody)
+      .then(postFindRegisterResponse => {
 
-    const requestBody = req.body;
-    httpRequest(postOptions, requestBody)
-      .then(response => {
-        const userInfo = response.body;
-        // Error during registration
-        if (!userInfo) {
+        if(postFindRegisterResponse.body.length){
           return res.json({message: "회원가입 실패"});
-        } else {
-          const token = jwt.sign(userInfo, process.env.JWT_SECRET_KEY);
-          // Store user's userId in the cookie upon successful registration
-          res.cookie("authToken", token, {
-            maxAge: 86400_000,
-            httpOnly: true,
-          });
-          res.cookie("userType", 1, {
-            maxAge: 86400_000,
-            httpOnly: true,
-          });
-          res.redirect('/');
         }
+        else {
+          const postOptions = {
+            host: 'stop_bang_auth_DB',
+            port: process.env.PORT,
+            path: `/db/resident/create`,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          };
+
+          const requestBody = req.body;
+          httpRequest(postOptions, requestBody)
+            .then(response => {
+              const userInfo = response.body;
+              // Error during registration
+              if (!userInfo) {
+                return res.json({message: "회원가입 실패"});
+              } else {
+                const token = jwt.sign(userInfo, process.env.JWT_SECRET_KEY);
+                // Store user's userId in the cookie upon successful registration
+                res.cookie("authToken", token, {
+                  maxAge: 86400_000,
+                  httpOnly: true,
+                });
+                res.cookie("userType", 1, {
+                  maxAge: 86400_000,
+                  httpOnly: true,
+                });
+                res.redirect('/');
+              }
+            });
+          }
       });
   },
 
   registerAgent: async (req, res) => {
     /* msa */
+    
+    const postFindAgentOptions = {
+      host: 'stop_bang_auth_DB',
+      port: process.env.PORT,
+      path: `/db/agent/findById`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    }
+  
+    let findAgentRequestBody = {username: res.locals.auth};
+    let agentResult = await httpRequest(postFindAgentOptions, findAgentRequestBody);
+
+    if(agentResult.length){
+      return res.json({message: "회원가입 실패"});
+    }
+
     const postOptions = {
       host: 'stop_bang_auth_DB',
       port: process.env.PORT,
