@@ -147,6 +147,7 @@ module.exports = {
     if(agentResult.length){
       return res.json({message: "이미 사용중인 아이디입니다."});
     }
+    else {
 
     const postOptions = {
       host: 'stop_bang_auth_DB',
@@ -204,6 +205,7 @@ module.exports = {
             res.redirect('/');
           }
         });
+      }
   },
   
   getPhoneNumber: async (req, res) => {
