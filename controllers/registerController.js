@@ -86,7 +86,7 @@ module.exports = {
       }
     }
   
-    let findRegisterRequestBody = {username: res.locals.auth};
+    let findRegisterRequestBody = {username: req.body.username};
     httpRequest(postFindRegisterOptions, findRegisterRequestBody)
       .then(postFindRegisterResponse => {
 
@@ -131,7 +131,6 @@ module.exports = {
 
   registerAgent: async (req, res) => {
     /* msa */
-    
     const postFindAgentOptions = {
       host: 'stop_bang_auth_DB',
       port: process.env.PORT,
@@ -142,7 +141,7 @@ module.exports = {
       }
     }
   
-    let findAgentRequestBody = {username: res.locals.auth};
+    let findAgentRequestBody = {username: req.body.username};
     let agentResult = await httpRequest(postFindAgentOptions, findAgentRequestBody);
 
     if(agentResult.length){
