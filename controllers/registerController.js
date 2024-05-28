@@ -76,61 +76,51 @@ module.exports = {
 
   registerResident: async (req, res) => {
     /* msa */
-    const postFindRegisterOptions = {
+    const postOptions = {
       host: 'stop_bang_auth_DB',
       port: process.env.PORT,
-      path: `/db/resident/findById`,
+      path: `/db/resident/create`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       }
-    }
-  
-    let findRegisterRequestBody = {username: req.body.username};
-    httpRequest(postFindRegisterOptions, findRegisterRequestBody)
-      .then(postFindRegisterResponse => {
+    };
 
-        if(postFindRegisterResponse.body.length){
-          return res.json({message: "이미 사용중인 아이디입니다."});
+    const requestBody = req.body;
+    httpRequest(postOptions, requestBody)
+      .then(response => {
+        const userInfo = response.body;
+        // Error during registration
+        if (!userInfo) {
+          return res.json({message: "회원가입 실패"});
+        } else {
+          const token = jwt.sign(userInfo, process.env.JWT_SECRET_KEY);
+          // Store user's userId in the cookie upon successful registration
+          res.cookie("authToken", token, {
+            maxAge: 86400_000,
+            httpOnly: true,
+          });
+          res.cookie("userType", 1, {
+            maxAge: 86400_000,
+            httpOnly: true,
+          });
+          res.redirect('/');
         }
-        else {
-          const postOptions = {
-            host: 'stop_bang_auth_DB',
-            port: process.env.PORT,
-            path: `/db/resident/create`,
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          };
-
-          const requestBody = req.body;
-          httpRequest(postOptions, requestBody)
-            .then(response => {
-              const userInfo = response.body;
-              // Error during registration
-              if (!userInfo) {
-                return res.json({message: "회원가입 실패"});
-              } else {
-                const token = jwt.sign(userInfo, process.env.JWT_SECRET_KEY);
-                // Store user's userId in the cookie upon successful registration
-                res.cookie("authToken", token, {
-                  maxAge: 86400_000,
-                  httpOnly: true,
-                });
-                res.cookie("userType", 1, {
-                  maxAge: 86400_000,
-                  httpOnly: true,
-                });
-                res.redirect('/');
-              }
-            });
-          }
       });
   },
 
   registerAgent: async (req, res) => {
     /* msa */
+    const postOptions = {
+      host: 'stop_bang_auth_DB',
+      port: process.env.PORT,
+      path: `/db/agent/create`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
+    
     const requestBody = req.body;
     // agent_list_ra_regno에는 공공데이터의 SYS_REGNO를 대입
     // 서울시 공공데이터 api
@@ -157,36 +147,6 @@ module.exports = {
       }
     }
 
-    const postFindAgentOptions = {
-      host: 'stop_bang_auth_DB',
-      port: process.env.PORT,
-      path: `/db/agent/findById`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    }
-  
-    let findAgentRequestBody = {username: req.body.username};
-    // let agentResult = await httpRequest(postFindAgentOptions, findAgentRequestBody);
-
-    httpRequest(postFindAgentOptions, findAgentRequestBody)
-    .then(agentResult => {
-    if(agentResult.length){
-      return res.json({message: "이미 사용중인 아이디입니다."});
-    }
-    else {
-
-    const postOptions = {
-      host: 'stop_bang_auth_DB',
-      port: process.env.PORT,
-      path: `/db/agent/create`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    };
-
     httpRequest(postOptions, requestBody)
         .then(response => {
           const userInfo = response.body;
@@ -207,8 +167,6 @@ module.exports = {
             res.redirect('/');
           }
         });
-      }
-    });
   },
   
   getPhoneNumber: async (req, res) => {
@@ -247,14 +205,3 @@ module.exports = {
     }
   }
 };
-
-
-
-
-
-
-
-
-
-
-
