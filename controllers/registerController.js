@@ -131,34 +131,6 @@ module.exports = {
 
   registerAgent: async (req, res) => {
     /* msa */
-    const postFindAgentOptions = {
-      host: 'stop_bang_auth_DB',
-      port: process.env.PORT,
-      path: `/db/agent/findById`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    }
-  
-    let findAgentRequestBody = {username: req.body.username};
-    let agentResult = await httpRequest(postFindAgentOptions, findAgentRequestBody);
-
-    if(agentResult.length){
-      return res.json({message: "이미 사용중인 아이디입니다."});
-    }
-    else {
-
-    const postOptions = {
-      host: 'stop_bang_auth_DB',
-      port: process.env.PORT,
-      path: `/db/agent/create`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    };
-    
     const requestBody = req.body;
     // agent_list_ra_regno에는 공공데이터의 SYS_REGNO를 대입
     // 서울시 공공데이터 api
@@ -185,6 +157,36 @@ module.exports = {
       }
     }
 
+    const postFindAgentOptions = {
+      host: 'stop_bang_auth_DB',
+      port: process.env.PORT,
+      path: `/db/agent/findById`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    }
+  
+    let findAgentRequestBody = {username: req.body.username};
+    // let agentResult = await httpRequest(postFindAgentOptions, findAgentRequestBody);
+
+    httpRequest(postFindAgentOptions, findAgentRequestBody)
+    .then(agentResult => {
+    if(agentResult.length){
+      return res.json({message: "이미 사용중인 아이디입니다."});
+    }
+    else {
+
+    const postOptions = {
+      host: 'stop_bang_auth_DB',
+      port: process.env.PORT,
+      path: `/db/agent/create`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
+
     httpRequest(postOptions, requestBody)
         .then(response => {
           const userInfo = response.body;
@@ -206,6 +208,7 @@ module.exports = {
           }
         });
       }
+    });
   },
   
   getPhoneNumber: async (req, res) => {
