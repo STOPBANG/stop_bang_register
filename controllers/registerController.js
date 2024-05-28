@@ -91,7 +91,7 @@ module.exports = {
       .then(postFindRegisterResponse => {
 
         if(postFindRegisterResponse.body.length){
-          return res.json({message: "회원가입 실패"});
+          return res.json({message: "이미 사용중인 아이디입니다."});
         }
         else {
           const postOptions = {
@@ -145,7 +145,7 @@ module.exports = {
     let agentResult = await httpRequest(postFindAgentOptions, findAgentRequestBody);
 
     if(agentResult.length){
-      return res.json({message: "회원가입 실패"});
+      return res.json({message: "이미 사용중인 아이디입니다."});
     }
 
     const postOptions = {
