@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: false }));
 // 회원가입
 const registerController = require("./controllers/registerController");
 app.post("/certification", registerController.certification);
-app.post("/certificationCheck", registerController.certificationCheck);
+app.post("/certification-check", registerController.certificationCheck);
 app.post("/register/resident", registerController.registerResident);
 app.post("/register/agent", registerController.registerAgent);
 app.get("/phoneNumber/:sys_regno", registerController.getPhoneNumber);
