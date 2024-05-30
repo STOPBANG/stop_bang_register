@@ -36,41 +36,38 @@ module.exports = {
   },
 
   certificationCheck: async (req, res) => {
-    try {
-      const { email, code } = req.body;
+    const { email, code } = req.body;
+    console.log("email : ", email, ", code : ", code);
 
-      if (
+    if (
         !email ||
         typeof email !== "string" ||
         !code ||
         typeof code !== "string"
-      ) {
-        return res.status(400).send("Invalid Param");
+    ) {
+      return res.status(400).send("Invalid Param");
+    }
+
+    /* msa */
+    const postOptions = {
+      host: 'stop_bang_auth_DB',
+      port: process.env.PORT,
+      path: `/db/cert/findCertByCode`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       }
+    };
 
-      /* msa */
-      const postOptions = {
-        host: 'auth-api',
-        port: process.env.PORT,
-        path: `/db/cert/compare`,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      };
+    const requestBody = req.body;
 
-      const requestBody = req.body;
-      httpRequest(postOptions, requestBody)
-        .then(res => {
-          if (!res) {
-            return res.status(404).send("Data Not Found.");
-          }
-        })
-
-      res.send("Success!");
-    } catch (error) {
-      console.log(error);
-      res.status(500).send("Server Error");
+    const certResponse = await httpRequest(postOptions, requestBody);
+    console.log("certResponse.body : ", certResponse.body);
+    if (certResponse.body.cert.length === 0) {
+      console.log("error : 사용자가 입력한 정보와 일치하는 데이터를 찾지 못했습니다.");
+      return res.json({result: "404"});
+    } else{
+      return res.json({result: "200"});
     }
   },
 
