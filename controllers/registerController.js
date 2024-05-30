@@ -13,7 +13,7 @@ module.exports = {
 
       /* msa */
       const postOptions = {
-        host: 'stop_bang_auth_DB',
+        host: 'auth-api',
         port: process.env.PORT,
         path: `/db/cert/create`,
         method: 'PUT',
@@ -50,7 +50,7 @@ module.exports = {
 
       /* msa */
       const postOptions = {
-        host: 'stop_bang_auth_DB',
+        host: 'auth-api',
         port: process.env.PORT,
         path: `/db/cert/compare`,
         method: 'POST',
@@ -77,7 +77,7 @@ module.exports = {
   registerResident: async (req, res) => {
     /* msa */
     const postOptions = {
-      host: 'stop_bang_auth_DB',
+      host: 'auth-api',
       port: process.env.PORT,
       path: `/db/resident/create`,
       method: 'POST',
@@ -112,7 +112,7 @@ module.exports = {
   registerAgent: async (req, res) => {
     /* msa */
     const postOptions = {
-      host: 'stop_bang_auth_DB',
+      host: 'auth-api',
       port: process.env.PORT,
       path: `/db/agent/create`,
       method: 'POST',
