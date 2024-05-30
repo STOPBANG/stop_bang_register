@@ -50,7 +50,7 @@ module.exports = {
 
     /* msa */
     const postOptions = {
-      host: 'stop_bang_auth_DB',
+      host: 'auth-api',
       port: process.env.PORT,
       path: `/db/cert/findCertByCode`,
       method: 'POST',
